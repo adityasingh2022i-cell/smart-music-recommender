@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Mood Music{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="col-span-1 glass p-6 rounded-2xl shadow space-y-5 fade-in">
+    <h3 class="text-xl font-bold mb-2">Preferences</h3>
+    <form method="POST" action="/update_preferences" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1">Languages (comma separated)</label>
+        <input name="languages" value="{{ user.preferred_languages }}" class="w-full p-2 rounded bg-white/10 placeholder-gray-300 focus:ring-2 focus:ring-pink-400" />
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Artists (comma separated)</label>
+        <input name="artists" value="{{ user.preferred_artists }}" class="w-full p-2 rounded bg-white/10 placeholder-gray-300 focus:ring-2 focus:ring-pink-400" />
+      </div>
+      <button class="w-full py-2 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 font-semibold">Save</button>
+    </form>
+    <div>
+      <button id="scan-face" class="w-full py-2 rounded-full bg-green-500 hover:bg-green-400 font-semibold transition">Scan Your Face</button>
+    </div>
+  </div>
+
+  <div class="col-span-2 space-y-6">
+    <div class="glass p-6 rounded-2xl shadow flex flex-col md:flex-row items-center gap-4 fade-in">
+      <div class="flex-1">
+        <h2 class="text-3xl font-bold">Welcome back, {{ user.username | capitalize }}!</h2>
+        <p class="mt-1 text-gray-300">We'll recommend music based on your mood, language, and artist choices.</p>
+      </div>
+      <div class="flex gap-3 mt-3 md:mt-0">
+        <div class="px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">Mood: <span id="mood-display">Unknown</span></div>
+        <div class="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600">Language: <span id="lang-display">Any</span></div>
+      </div>
+    </div>
+
+    <div id="recommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% if songs %}
+        {% for song in songs %}
+          <div class="glass p-4 rounded-2xl flex justify-between items-start shadow hover:shadow-2xl transition transform hover:scale-102">
+            <div>
+              <div class="font-semibold text-lg">{{ song.title }}</div>
+              <div class="text-sm text-gray-300">{{ song.artist }} &middot; {{ song.language | capitalize }}</div>
+              <div class="text-xs mt-1">Mood: {{ song.mood | capitalize }}</div>
+            </div>
+            <div class="flex items-center">
+              <a href="{{ song.url }}" target="_blank" class="text-pink-400 font-medium underline">Play</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-span-full glass p-6 rounded-2xl text-center">
+          <p class="mb-2">No recommendations yet. Scan your face or adjust preferences.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('scan-face').addEventListener('click', () => {
+    fetch('/scan_face', { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('mood-display').innerText = data.mood;
+        document.getElementById('lang-display').innerText = data.languages || 'Any';
+        const rec = document.getElementById('recommendations');
+        rec.innerHTML = '';
+        if (data.songs && data.songs.length) {
+          data.songs.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'glass p-4 rounded-2xl flex justify-between items-start shadow hover:shadow-2xl transition transform hover:scale-102';
+            card.innerHTML = `
+              <div>
+                <div class="font-semibold text-lg">${s.title}</div>
+                <div class="text-sm text-gray-300">${s.artist} · ${s.language}</div>
+                <div class="text-xs mt-1">Mood: ${s.mood}</div>
+              </div>
+              <div class="flex items-center">
+                <a href="${s.url}" target="_blank" class="text-pink-400 font-medium underline">Play</a>
+              </div>
+            `;
+            rec.appendChild(card);
+          });
+        } else {
+          rec.innerHTML = `<div class="col-span-full glass p-6 rounded-2xl text-center"><p>No songs matched your mood/preferences.</p></div>`;
+        }
+      });
+  });
+</script>
+{% endblock %}

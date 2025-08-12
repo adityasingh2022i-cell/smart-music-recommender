@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Music Mood App{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Glassmorphism custom blur fallback */
+    .glass { backdrop-filter: blur(12px); background-color: rgba(255,255,255,0.05); }
+    .fade-in { animation: fadeIn 0.9s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Background music (muted by default to satisfy browser restrictions) -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="/static/music/background.mp3" type="audio/mpeg" />
+    Your browser does not support audio.
+  </audio>
+  <div class="fixed top-4 right-4 flex gap-2 z-50">
+    <button id="music-toggle" aria-label="Toggle background music" class="flex items-center gap-2 px-4 py-2 bg-pink-500/90 hover:bg-pink-400 rounded-2xl backdrop-blur-sm shadow-lg transition transform hover:scale-105">
+      <span id="music-icon">🎵</span> <span id="music-label">Play Music</span>
+    </button>
+  </div>
+
+  <div class="flex-grow container mx-auto px-4 py-12">
+    {% block content %}{% endblock %}
+  </div>
+
+  <footer class="text-center text-sm text-gray-400 py-6">&copy; {{ current_year }} Mood Music • Designed with care</footer>
+
+  <script>
+    const music = document.getElementById('bg-music');
+    const toggle = document.getElementById('music-toggle');
+    const label = document.getElementById('music-label');
+    const icon = document.getElementById('music-icon');
+    let playing = false;
+    toggle.addEventListener('click', () => {
+      if (!playing) {
+        music.play().catch(e => console.warn('Autoplay prevented', e));
+        label.innerText = 'Pause Music';
+        icon.innerText = '⏸️';
+        playing = true;
+      } else {
+        music.pause();
+        label.innerText = 'Play Music';
+        icon.innerText = '🎵';
+        playing = false;
+      }
+    });
+    // subtle fade-in on load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.fade-in').forEach(el => el.classList.add('opacity-100'));
+    });
+  </script>
+</body>
+</html>
